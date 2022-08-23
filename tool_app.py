@@ -56,9 +56,11 @@ st.title("Plot single line graph")
 title = st.text_input("Graph title")
 
 if title is not '':
-    new_plot = px.line(
-        graph_data, x='Time (s)', y=selected_col, title= title, 
-        hover_data=['Time (s)', selected_col])
+    new_plot = px.line(graph_data, x='Time (s)', y=selected_col, 
+                        title= title, hover_data=['Time (s)', selected_col])
+    new_plot.add_hline(y=180, line_dash="dot",
+                        annotation_text="180 deg", annotation_position= "bottom right",
+                        line_color= "red")
     st.write(new_plot)
 st.markdown(md)
 
@@ -85,7 +87,10 @@ if st.checkbox(f'Create plot for multiple columns', value= True):
         title_multi = st.text_input("Mutiline graph title")
         
         if title_multi is not '':
-            plot = px.line(graph_data, x='Time (s)', y=graph_data.columns, title= title_multi, hover_data=['Time (s)'])
+            plot = px.line(graph_data, x='Time (s)', y=graph_data.columns, 
+                            title= title_multi, hover_data=['Time (s)'])
+            plot.add_hline(y=180, line_dash="dot",
+                            annotation_text="180 deg", annotation_position= "bottom right", line_color="red")
             st.write(plot)
 
 
