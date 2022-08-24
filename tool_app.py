@@ -24,6 +24,28 @@ def create_df(selected_sheet):
         st.error('Select the worksheet containing the Time (s) column') 
     return df
 
+def h_slider(data):
+    max_value = int(graph_data.max().max())
+    min_value = int(graph_data.min().min())
+    avr_value = int((max_value + min_value)/2)
+    
+    horizontal_value = st.slider(
+        'Select value for horizontal line',
+        min_value, max_value, avr_value
+    )
+    return horizontal_value
+
+def plot(
+    data, y_value, title: str, hover_data, h_line_value: int, h_line_text: str):
+    new_plot = px.line(
+        data, x='Time (s)', y=y_value, title= title, hover_data=hover_data
+    )
+    new_plot.add_hline(
+        y=h_line_value, line_dash="dot", annotation_text=h_line_text, 
+        annotation_position= "bottom right", line_color= "red",
+    )
+    return new_plot
+
 st.write(
     '''
 # 📊 Fire tests analysis tool
@@ -40,6 +62,8 @@ use_example_file = st.checkbox(
     'Use example file', False, help='Use built-in example file to demo app'
 )
 
+# If CSV is not uploaded and checkbox is filled, use values from the example file
+# and pass them down to the next if block
 if use_example_file:
     uploaded_file = 'data/example_FT000.xlsx'
 
@@ -47,15 +71,13 @@ if uploaded_file:
     raw_data = pd.ExcelFile(uploaded_file)
     sheet_list = raw_data.sheet_names
     st.markdown(md)
-    
-    #Choose sheet
+
     st.subheader('Available sheets to analyze')
     selected_sheet = st.radio('Choose: ', sheet_list)
-
     df = create_df(selected_sheet)
-    
     st.markdown(md)
 
+#Analysis of a single record or multiple records
 if uploaded_file != None:
     left, right = st.columns(2)
     with left:
@@ -69,8 +91,8 @@ if uploaded_file != None:
             disabled=False
     )
 
-#Select single/multi
     if single:
+        #Select single column
         st.subheader('Select column')
         selected_col = st.selectbox(
             'Select one column', df.columns[1:]
@@ -84,23 +106,16 @@ if uploaded_file != None:
             st.write(graph_data.head())
             st.markdown(md)
 
-
         #Plot graph
         st.title("Plot single line graph")
-        title = st.text_input("Graph title")
+        graph_title = st.text_input("Graph title")
 
-        if title is not '':
-            new_plot = px.line(
-                graph_data, x='Time (s)', y=selected_col, 
-                title= title, hover_data=['Time (s)', selected_col]
+        if graph_title is not '':
+            h_line_slider_value = h_slider(graph_data)
+            graph = plot(
+                graph_data, selected_col, graph_title, ['Time (s)', selected_col], h_line_slider_value, f'{h_line_slider_value} deg'
             )
-
-            new_plot.add_hline(
-                y=180, line_dash="dot", annotation_text="180 deg", 
-                annotation_position= "bottom right", line_color= "red"
-            )
-
-            st.write(new_plot)
+            st.write(graph)
             st.markdown(md)
 
     elif multi:
@@ -113,7 +128,6 @@ if uploaded_file != None:
         all_columns = st.checkbox('Select all columns')
         if all_columns:
             columns = df.columns
-            #st.write(df.columns)
         else:
             st.subheader("Select columns, remember to add: 'Time (s)'")
             columns = st.multiselect('Select columns:', df.columns, default=None)
@@ -121,21 +135,16 @@ if uploaded_file != None:
             if confirm_btn_2 == True:
                 st.table(columns)
                 st.markdown(md)
-                #Section: Plot graph for selected columnd
+                
         graph_data = pd.DataFrame(df[columns])
-        title_multi = st.text_input("Mutiline graph title")
+        graph_title = st.text_input("Mutiline graph title")
         
-        if title_multi is not '':
-            plot = px.line(
-                graph_data, x='Time (s)', y=graph_data.columns, 
-                title= title_multi, hover_data=['Time (s)']
+        if graph_title is not '':
+            h_line_slider_value = h_slider(graph_data)
+            graph = plot(
+                graph_data, graph_data.columns, graph_title, ['Time (s)'], h_line_slider_value, f'{h_line_slider_value} deg'
             )
-            plot.add_hline(
-                y=180, line_dash="dot", annotation_text="180 deg", 
-                annotation_position= "bottom right", line_color="red"
-            )
-            st.write(plot)
-
+            st.write(graph)
 
 
 #Show/hide raw data frame
